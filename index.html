@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nos Labirintos do Espelho Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+/* ============================================================
+   ESPELHO DIGITAL — STYLE SYSTEM (CORRIGIDO)
+   ============================================================ */
+
+:root {
+  --black:#030507; --deep:#060b12; --surface:#0c1520; --panel:#111d2a;
+  --glass:rgba(12,28,48,0.55); --glass-light:rgba(255,255,255,0.04);
+  --blue-neon:#00c8ff; --blue-cold:#0077b6; --blue-dim:#0e3a5a;
+  --white-ice:#e8f4fc; --white-dim:#8bacc4; --metal:#4a6580;
+  --accent:#00c8ff; --accent-glow:rgba(0,200,255,0.2); --red-glitch:#ff2256;
+  --font-display:'Poppins',sans-serif;
+  --font-serif:'Inter',sans-serif;
+  --font-mono:'Space Mono',monospace;
+  --ease-out-expo:cubic-bezier(0.19,1,0.22,1);
+  --ease-in-out:cubic-bezier(0.76,0,0.24,1);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--black);color:var(--white-ice);font-family:var(--font-mono);overflow-x:hidden;cursor:none;}
+::selection{background:var(--accent-glow);color:var(--white-ice);}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:var(--black);}
+::-webkit-scrollbar-thumb{background:var(--blue-cold);}
+
+/* ── CURSOR ── */
+.cursor-dot{position:fixed;top:0;left:0;z-index:9999;width:6px;height:6px;background:var(--accent);border-radius:50%;pointer-events:none;mix-blend-mode:screen;}
+.cursor-ring{position:fixed;top:0;left:0;z-index:9998;width:32px;height:32px;border:1px solid rgba(0,200,255,0.5);border-radius:50%;pointer-events:none;transition:width .3s,height .3s,border-color .3s,opacity .3s;}
+.cursor-ring.hover{width:56px;height:56px;border-color:var(--accent);}
+@media (hover:none){
+  body{cursor:auto;}
+  .cursor-dot,.cursor-ring{display:none!important;}
+}
+
+/* ── LOADER ── */
+#loader{position:fixed;inset:0;z-index:10000;background:var(--black);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity .8s ease,visibility .8s ease;}
+#loader.done{opacity:0;visibility:hidden;pointer-events:none;}
+#loader-canvas{position:absolute;inset:0;width:100%;height:100%;}
+.loader-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;}
+.loader-line{width:1px;height:60px;background:linear-gradient(to bottom,rgba(0,200,255,0),var(--accent));margin-bottom:8px;animation:loader-line 1.2s ease-in-out infinite;}
+@keyframes loader-line{0%,100%{opacity:.3}50%{opacity:1}}
+.loader-text{font-family:var(--font-display);font-size:.55rem;letter-spacing:.4em;color:var(--white-dim);}
+.loader-sub{font-family:var(--font-mono);font-size:.5rem;letter-spacing:.3em;color:var(--accent);opacity:.7;}
+.loader-progress{width:200px;height:1px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden;}
+.loader-bar{height:100%;background:linear-gradient(to right,var(--blue-cold),var(--accent));width:0;transition:width 2.5s var(--ease-out-expo);}
+
+/* ── MIRROR INTRO ── */
+#mirror-intro{position:fixed;inset:0;z-index:9000;background:var(--black);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 1s ease;}
+#mirror-intro.gone{opacity:0;pointer-events:none;}
+#particle-bg{position:absolute;inset:0;width:100%;height:100%;}
+.mirror-container{position:relative;width:min(420px,80vw);height:min(560px,72vh);cursor:pointer;}
+#mirror-canvas{width:100%;height:100%;border-radius:4px;display:block;}
+.mirror-glow{position:absolute;inset:-20px;background:radial-gradient(ellipse,rgba(0,200,255,.1) 0%,rgba(0,200,255,0) 70%);pointer-events:none;animation:mirror-breathe 3s ease-in-out infinite;}
+@keyframes mirror-breathe{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+.mirror-crack{position:absolute;inset:0;pointer-events:none;opacity:0;}
+.mirror-prompt{position:absolute;bottom:-56px;left:50%;transform:translateX(-50%);pointer-events:none;width:max-content;}
+.pulse-text{font-family:var(--font-display);font-size:.55rem;letter-spacing:.4em;color:var(--white-dim);animation:pulse-fade 2s ease-in-out infinite;}
+@keyframes pulse-fade{0%,100%{opacity:.4}50%{opacity:1}}
+.intro-title-wrap{position:absolute;top:32px;left:50%;transform:translateX(-50%);text-align:center;}
+.intro-subtitle{font-family:var(--font-display);font-size:.5rem;letter-spacing:.5em;color:var(--accent);opacity:.6;}
+
+/* ── SHATTER ── */
+#shatter-overlay{position:fixed;inset:0;z-index:8500;pointer-events:none;overflow:hidden;}
+.shard{position:absolute;background:linear-gradient(135deg,rgba(0,200,255,.15),rgba(255,255,255,.08));border:1px solid rgba(0,200,255,.3);clip-path:polygon(50% 0%,100% 50%,60% 100%,0% 80%,20% 20%);animation:shard-fly var(--dur) var(--ease-out-expo) forwards;}
+@keyframes shard-fly{0%{transform:translate(0,0) rotate(0) scale(1);opacity:1}60%{opacity:.8}100%{transform:translate(var(--tx),var(--ty)) rotate(var(--rot)) scale(.3);opacity:0}}
+
+/* ── MAIN SITE ── */
+#main-site{opacity:0;transition:opacity 1s ease .3s;}
+#main-site.visible{opacity:1;}
+#main-site.hidden{display:none;}
+
+/* ── NAV ── */
+#main-nav{position:fixed;top:0;left:0;right:0;z-index:500;display:flex;align-items:center;justify-content:space-between;padding:20px 48px;transition:background .4s,padding .4s;}
+#main-nav.scrolled{background:rgba(3,5,7,.85);backdrop-filter:blur(20px);padding:14px 48px;border-bottom:1px solid rgba(0,200,255,.1);}
+.nav-logo{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:.6rem;letter-spacing:.3em;color:var(--white-dim);}
+.nav-logo-sym{color:var(--accent);font-size:1rem;}
+.nav-links{display:flex;gap:40px;list-style:none;}
+.nav-links a{font-family:var(--font-display);font-size:.5rem;letter-spacing:.3em;color:var(--white-dim);text-decoration:none;position:relative;transition:color .3s;}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--accent);transition:width .3s;}
+.nav-links a:hover{color:var(--white-ice);}
+.nav-links a:hover::after{width:100%;}
+.nav-toggle{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+.nav-toggle span{display:block;width:24px;height:1px;background:var(--white-dim);transition:all .3s;}
+.mobile-nav{position:fixed;inset:0;z-index:490;background:rgba(3,5,7,.97);backdrop-filter:blur(20px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;transform:translateY(-100%);transition:transform .5s var(--ease-in-out);}
+.mobile-nav.open{transform:translateY(0);}
+.mobile-nav a{font-family:var(--font-display);font-size:1rem;letter-spacing:.3em;color:var(--white-dim);text-decoration:none;}
+.mobile-nav a:hover{color:var(--accent);}
+
+/* ── HERO ── */
+#hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+#hero-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.hero-content{position:relative;z-index:2;text-align:center;padding:100px 24px;max-width:900px;}
+.hero-eyebrow{display:flex;align-items:center;gap:16px;justify-content:center;margin-bottom:40px;font-family:var(--font-display);font-size:.48rem;letter-spacing:.4em;color:var(--white-dim);}
+.eyebrow-line{display:block;flex:1;max-width:80px;height:1px;background:linear-gradient(to right,rgba(139,172,196,0),var(--white-dim));}
+.eyebrow-line:last-child{background:linear-gradient(to left,rgba(139,172,196,0),var(--white-dim));}
+.hero-title{font-family:var(--font-display);font-size:clamp(2.4rem,7.5vw,6.5rem);font-weight:700;line-height:1.08;letter-spacing:-.03em;margin-bottom:28px;color:var(--white-ice);}
+.title-em{font-style:italic;color:var(--accent);}
+.line-wrap{overflow:hidden;display:block;padding-bottom:.06em;}
+.title-line{display:block;transform:translateY(110%);transition:transform .9s var(--ease-out-expo);}
+.title-line.in{transform:translateY(0);}
+.hero-sub{font-family:var(--font-serif);font-weight:300;font-size:clamp(.95rem,2vw,1.15rem);color:var(--white-dim);line-height:1.9;margin-bottom:48px;}
+.hero-meta{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;margin-bottom:56px;}
+.meta-item{display:flex;flex-direction:column;gap:4px;align-items:center;}
+.meta-label{font-family:var(--font-display);font-size:.4rem;letter-spacing:.4em;color:var(--metal);}
+.meta-val{font-family:var(--font-display);font-size:.55rem;letter-spacing:.2em;color:var(--white-dim);}
+.meta-sep{color:var(--blue-dim);font-size:1.2rem;}
+.hero-cta{display:inline-flex;align-items:center;gap:12px;font-family:var(--font-display);font-size:.5rem;letter-spacing:.3em;color:var(--accent);text-decoration:none;border:1px solid rgba(0,200,255,.3);padding:16px 32px;transition:all .3s;position:relative;overflow:hidden;}
+.hero-cta::before{content:'';position:absolute;inset:0;background:var(--accent-glow);transform:scaleX(0);transform-origin:left;transition:transform .3s;}
+.hero-cta:hover::before{transform:scaleX(1);}
+.hero-cta span,.hero-cta svg{position:relative;z-index:1;}
+.hero-cta svg{width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:1.5;}
+.hero-scroll-indicator{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--metal);font-size:.45rem;letter-spacing:.4em;}
+.scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,var(--blue-cold),rgba(0,119,182,0));animation:scroll-pulse 2s ease-in-out infinite;}
+@keyframes scroll-pulse{0%,100%{transform:scaleY(1);opacity:.5}50%{transform:scaleY(1.3);opacity:1}}
+
+/* ── REVEAL ── */
+.reveal-item{opacity:0;transform:translateY(40px);transition:opacity .8s var(--ease-out-expo),transform .8s var(--ease-out-expo);}
+.reveal-item.revealed{opacity:1;transform:translateY(0);}
+
+/* ── GLASS ── */
+.glass-card{background:var(--glass);border:1px solid rgba(0,200,255,.12);backdrop-filter:blur(20px);border-radius:2px;}
+.glass-card:hover{border-color:rgba(0,200,255,.3);box-shadow:0 0 40px rgba(0,200,255,.08);}
+.section-tag{font-family:var(--font-display);font-size:.45rem;letter-spacing:.5em;color:var(--accent);opacity:.7;display:block;margin-bottom:16px;}
+.section-header{margin-bottom:64px;}
+.section-header h2{font-family:var(--font-display);font-weight:700;font-size:clamp(2rem,4.5vw,3.2rem);color:var(--white-ice);line-height:1.15;}
+.container{max-width:1200px;margin:0 auto;padding:0 48px;}
+
+/* ── EU DIGITAL ── */
+#eu-digital{position:relative;min-height:100vh;padding:120px 0;overflow:hidden;}
+.eu-bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,200,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.03) 1px,transparent 1px);background-size:60px 60px;-webkit-mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,#000 0%,transparent 100%);mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,#000 0%,transparent 100%);}
+.eu-content{position:relative;max-width:1200px;margin:0 auto;padding:0 48px;}
+.silhouette-wrapper{position:relative;width:100%;height:500px;margin:60px 0;}
+#silhouette-canvas{width:100%;height:100%;display:block;}
+.psych-phrases{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.phrase{position:absolute;font-family:var(--font-display);font-weight:300;font-size:clamp(1rem,2.2vw,1.5rem);color:var(--white-ice);text-align:center;opacity:0;transform:translateY(20px);transition:opacity .8s ease,transform .8s ease;max-width:600px;padding:0 24px;}
+.phrase.active{opacity:1;transform:translateY(0);}
+.eu-text{max-width:700px;margin:0 auto;text-align:center;}
+.eu-text p{font-family:var(--font-serif);font-size:1.05rem;color:var(--white-dim);line-height:1.9;margin-bottom:20px;}
+
+/* ── RESUMO ── */
+#resumo{padding:120px 0;background:var(--deep);}
+.resumo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:80px;}
+.resumo-card{padding:40px 32px;transition:transform .4s var(--ease-out-expo);}
+.resumo-card:hover{transform:translateY(-8px);}
+.card-icon{font-size:1.4rem;color:var(--accent);margin-bottom:24px;opacity:.7;}
+.resumo-card h3{font-family:var(--font-display);font-size:.65rem;letter-spacing:.3em;color:var(--white-ice);margin-bottom:16px;}
+.resumo-card p{font-family:var(--font-serif);font-size:.95rem;color:var(--white-dim);line-height:1.8;}
+.equipe-wrap{padding-top:60px;border-top:1px solid rgba(0,200,255,.1);}
+.equipe-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:32px;}
+.membro{display:flex;flex-direction:column;gap:6px;}
+.membro-role{font-family:var(--font-display);font-size:.4rem;letter-spacing:.3em;color:var(--accent);opacity:.6;}
+.membro-name{font-family:var(--font-serif);font-size:.85rem;color:var(--white-dim);line-height:1.4;}
+
+/* ── TEORIA ── */
+#teoria{padding:120px 0;}
+.teoria-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:24px;}
+.teoria-card{perspective:1000px;height:340px;cursor:pointer;background:none;border:none;backdrop-filter:none;}
+.teoria-card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .7s var(--ease-in-out);}
+.teoria-card:hover .teoria-card-inner,.teoria-card.flipped .teoria-card-inner{transform:rotateY(180deg);}
+.teoria-front,.teoria-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;padding:32px 26px;display:flex;flex-direction:column;background:var(--surface);border:1px solid rgba(0,200,255,.12);overflow:auto;}
+.teoria-back{transform:rotateY(180deg);justify-content:space-between;}
+.teoria-num{font-family:var(--font-mono);font-size:.55rem;color:var(--accent);opacity:.4;margin-bottom:20px;}
+.teoria-avatar{width:60px;height:60px;border-radius:50%;background:var(--blue-dim);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:.65rem;color:var(--accent);margin-bottom:20px;position:relative;}
+.avatar-ring{position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(0,200,255,.3);animation:ring-pulse 2s ease-in-out infinite;}
+@keyframes ring-pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:1}}
+.teoria-front h3{font-family:var(--font-serif);font-size:1.3rem;color:var(--white-ice);margin-bottom:4px;}
+.teoria-dates{font-family:var(--font-mono);font-size:.55rem;color:var(--metal);margin-bottom:16px;}
+.teoria-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;}
+.teoria-tags span{font-family:var(--font-display);font-size:.38rem;letter-spacing:.2em;color:var(--accent);opacity:.7;border:1px solid rgba(0,200,255,.2);padding:4px 10px;}
+.teoria-back p{font-family:var(--font-serif);font-weight:300;font-size:.85rem;color:var(--white-dim);line-height:1.7;}
+.teoria-obra{font-family:var(--font-mono);font-size:.5rem;color:var(--accent);opacity:.6;margin:12px 0;display:block;}
+.teoria-contrib{font-family:var(--font-mono);font-size:.58rem;color:var(--metal);line-height:1.6;}
+.teoria-instruction{font-family:var(--font-display);font-size:.45rem;letter-spacing:.3em;color:var(--metal);text-align:center;}
+
+/* ── RESULTADOS ── */
+#resultados{padding:120px 0;background:linear-gradient(to bottom,var(--deep),var(--black));}
+.resultado-blocks{display:flex;flex-direction:column;gap:2px;}
+.resultado-block{display:flex;align-items:flex-start;gap:40px;padding:36px 40px;border-left:1px solid rgba(0,200,255,.1);transition:background .3s;position:relative;}
+.resultado-block::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--accent);transform:scaleY(0);transition:transform .4s var(--ease-out-expo);transform-origin:top;}
+.resultado-block:hover::before{transform:scaleY(1);}
+.resultado-block:hover{background:var(--glass-light);}
+.rb-number{font-family:var(--font-mono);font-size:.55rem;color:var(--accent);opacity:.4;min-width:32px;padding-top:4px;}
+.rb-content h3{font-family:var(--font-display);font-size:.65rem;letter-spacing:.2em;color:var(--white-ice);margin-bottom:12px;}
+.rb-content p{font-family:var(--font-serif);font-size:1rem;color:var(--white-dim);line-height:1.8;}
+
+/* ── TIMELINE ── */
+#timeline{padding:120px 0 80px;overflow:hidden;}
+.timeline-header{max-width:1200px;margin:0 auto 64px;padding:0 48px;}
+.timeline-header h2{font-family:var(--font-serif);font-weight:300;font-size:clamp(2rem,5vw,3.6rem);color:var(--white-ice);}
+.timeline-track{position:relative;padding:0 48px 60px;overflow-x:auto;scrollbar-width:thin;}
+.timeline-rail{position:absolute;top:20px;left:48px;right:48px;height:1px;background:linear-gradient(to right,rgba(0,119,182,0),var(--blue-cold) 5%,var(--blue-cold) 95%,rgba(0,119,182,0));}
+.timeline-items{display:flex;gap:32px;padding-top:60px;min-width:max-content;}
+.tl-item{display:flex;flex-direction:column;align-items:center;gap:24px;width:240px;position:relative;}
+.tl-dot{position:absolute;top:-48px;width:12px;height:12px;background:var(--blue-dim);border:2px solid var(--blue-cold);border-radius:50%;transition:all .3s;}
+.tl-dot span{position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(0,200,255,.2);animation:tl-ring 2s ease-in-out infinite;}
+@keyframes tl-ring{0%,100%{transform:scale(1);opacity:.4}50%{transform:scale(1.5);opacity:0}}
+.tl-item:hover .tl-dot{background:var(--accent);box-shadow:0 0 16px var(--accent);}
+.tl-card{padding:28px 24px;width:100%;transition:transform .3s,box-shadow .3s;}
+.tl-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,.4);}
+.tl-year{font-family:var(--font-mono);font-size:.8rem;color:var(--accent);opacity:.7;display:block;margin-bottom:12px;}
+.tl-card h3{font-family:var(--font-display);font-size:.55rem;letter-spacing:.2em;color:var(--white-ice);margin-bottom:12px;}
+.tl-card p{font-family:var(--font-serif);font-size:.85rem;color:var(--white-dim);line-height:1.7;}
+
+/* ── IA ── */
+#ia{position:relative;padding:120px 0;overflow:hidden;}
+.ia-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(0,119,182,.08),rgba(0,119,182,0)),var(--deep);}
+#ia .container{position:relative;z-index:1;}
+.ia-desc{font-family:var(--font-serif);font-style:italic;font-size:1rem;color:var(--white-dim);margin-top:12px;}
+.ia-interface{max-width:760px;margin:0 auto;border:1px solid rgba(0,200,255,.18);background:rgba(6,11,18,.85);backdrop-filter:blur(24px);}
+.ia-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid rgba(0,200,255,.1);}
+.ia-status{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:.45rem;letter-spacing:.3em;color:var(--accent);}
+.ia-status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:ia-pulse 1.5s ease-in-out infinite;}
+@keyframes ia-pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,200,255,.4)}50%{box-shadow:0 0 0 6px rgba(0,200,255,0)}}
+.ia-model{font-family:var(--font-mono);font-size:.5rem;color:var(--metal);}
+.ia-chat{padding:24px;min-height:320px;max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:20px;}
+.ia-message{display:flex;gap:14px;align-items:flex-start;}
+.ia-msg-avatar{min-width:36px;height:36px;background:var(--blue-dim);border:1px solid rgba(0,200,255,.3);display:flex;align-items:center;justify-content:center;font-size:.9rem;color:var(--accent);flex-shrink:0;}
+.ia-msg-bubble{background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.12);padding:16px 20px;font-family:var(--font-serif);font-size:.95rem;color:var(--white-dim);line-height:1.8;flex:1;min-width:0;}
+.ia-msg-bubble p{margin-bottom:8px;}
+.ia-msg-bubble p:last-child{margin-bottom:0;}
+.ia-msg-bubble em{color:var(--accent);font-style:italic;}
+.ia-msg-bubble strong{color:var(--white-ice);}
+.ia-user-bubble{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:14px 18px;margin-left:50px;font-family:var(--font-mono);font-size:.75rem;color:var(--white-dim);line-height:1.6;word-break:break-word;}
+.ia-typing{display:flex;gap:5px;padding:8px 0;align-items:center;}
+.ia-typing span{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.4;animation:typing-dot 1.2s ease-in-out infinite;}
+.ia-typing span:nth-child(2){animation-delay:.2s;}
+.ia-typing span:nth-child(3){animation-delay:.4s;}
+@keyframes typing-dot{0%,100%{opacity:.2;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+.ia-suggestions{padding:12px 24px;border-top:1px solid rgba(0,200,255,.06);display:flex;flex-wrap:wrap;gap:8px;}
+.ia-sug{font-family:var(--font-mono);font-size:.6rem;color:var(--white-dim);background:transparent;border:1px solid rgba(0,200,255,.15);padding:8px 14px;cursor:pointer;transition:all .25s;}
+.ia-sug:hover{color:var(--accent);border-color:var(--accent);background:rgba(0,200,255,.06);}
+.ia-input-area{display:flex;border-top:1px solid rgba(0,200,255,.1);}
+#ia-input{flex:1;min-width:0;background:transparent;border:none;outline:none;padding:16px 24px;font-family:var(--font-mono);font-size:.75rem;color:var(--white-ice);caret-color:var(--accent);}
+#ia-input::placeholder{color:var(--metal);}
+#ia-send{padding:0 24px;background:transparent;border:none;border-left:1px solid rgba(0,200,255,.1);cursor:pointer;color:var(--accent);transition:background .2s;}
+#ia-send:hover{background:rgba(0,200,255,.08);}
+#ia-send:disabled{opacity:.4;cursor:default;}
+#ia-send svg{width:18px;height:18px;stroke:var(--accent);fill:none;stroke-width:1.5;}
+
+/* ── CONCLUSÃO ── */
+#conclusao{padding:120px 0;background:var(--deep);border-top:1px solid rgba(0,200,255,.08);}
+.conclusao-content{max-width:800px;margin:0 auto 80px;text-align:center;}
+.conclusao-quote{font-family:var(--font-serif);font-style:italic;font-size:clamp(1.1rem,2.5vw,1.6rem);color:var(--white-ice);line-height:1.7;margin:24px 0 40px;padding:0 32px;border-left:2px solid var(--accent);text-align:left;}
+.conclusao-text{font-family:var(--font-serif);font-size:1rem;color:var(--white-dim);line-height:1.9;margin-bottom:20px;text-align:left;}
+.palavras-chave{max-width:800px;margin:0 auto;}
+.tags-wrap{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px;}
+.kw-tag{font-family:var(--font-display);font-size:.45rem;letter-spacing:.3em;color:var(--white-dim);border:1px solid rgba(0,200,255,.2);padding:10px 20px;transition:all .3s;}
+.kw-tag:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-glow);}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid rgba(0,200,255,.08);padding:60px 0;}
+.footer-inner{max-width:1200px;margin:0 auto;padding:0 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:24px;}
+.footer-logo{font-family:var(--font-display);font-size:.6rem;letter-spacing:.3em;color:var(--white-dim);}
+.footer-info{text-align:center;}
+.footer-info p{font-family:var(--font-mono);font-size:.55rem;color:var(--metal);line-height:2;letter-spacing:.05em;}
+.footer-line{width:1px;height:60px;background:linear-gradient(to bottom,var(--accent),rgba(0,200,255,0));opacity:.3;}
+
+/* ── GLITCH ── */
+@keyframes glitch{0%,100%{clip-path:none;transform:none}20%{clip-path:inset(0 0 80% 0);transform:translate(-3px,0);color:var(--red-glitch)}40%{clip-path:inset(40% 0 40% 0);transform:translate(3px,0)}60%{clip-path:inset(80% 0 0 0);transform:translate(-2px,0);color:var(--accent)}}
+.glitch-text{animation:glitch 8s infinite;}
+
+/* ── RESPONSIVO ── */
+@media (max-width:1024px){
+  .teoria-grid{grid-template-columns:repeat(2,1fr);}
+  .equipe-grid{grid-template-columns:repeat(3,1fr);}
+}
+@media (max-width:768px){
+  .nav-links{display:none;}
+  .nav-toggle{display:flex;}
+  #main-nav{padding:16px 24px;}
+  .container{padding:0 24px;}
+  .resumo-grid,.teoria-grid{grid-template-columns:1fr;}
+  .equipe-grid{grid-template-columns:repeat(2,1fr);}
+  .hero-meta{gap:12px;}
+  .meta-sep{display:none;}
+  .resultado-block{flex-direction:column;gap:12px;padding:24px;}
+  .hero-eyebrow{font-size:.4rem;letter-spacing:.2em;}
+  .footer-inner{flex-direction:column;align-items:flex-start;}
+  .footer-line{display:none;}
+  .eu-content,.timeline-header{padding:0 24px;}
+  .timeline-track{padding:0 24px 60px;}
+  .timeline-rail{left:24px;right:24px;}
+  .ia-user-bubble{margin-left:20px;}
+}
+@media (max-width:480px){
+  .equipe-grid{grid-template-columns:1fr;}
+  .teoria-card{height:320px;}
+  .silhouette-wrapper{height:360px;}
+  .ia-sug{font-size:.55rem;padding:6px 10px;}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}
+  .reveal-item{opacity:1;transform:none;}
+  .title-line{transform:none;}
+}
+
+</style>
+</head>
+<body>
+
+  <!-- LOADING -->
+  <div id="loader">
+    <canvas id="loader-canvas"></canvas>
+    <div class="loader-content">
+      <div class="loader-line"></div>
+      <span class="loader-text">FACULDADE CESMAC DO AGRESTE</span>
+      <span class="loader-sub">INICIANDO PROTOCOLO DE IMERSÃO</span>
+      <div class="loader-progress"><div class="loader-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- MIRROR INTRO -->
+  <div id="mirror-intro">
+    <canvas id="particle-bg"></canvas>
+    <div class="mirror-container" id="mirror-container">
+      <canvas id="mirror-canvas"></canvas>
+      <div class="mirror-glow"></div>
+      <div class="mirror-crack" id="mirror-crack"></div>
+      <div class="mirror-prompt"><span class="pulse-text">TOQUE PARA ATRAVESSAR</span></div>
+    </div>
+    <div class="intro-title-wrap">
+      <p class="intro-subtitle">PSIC AGRESTE 2025–2026</p>
+    </div>
+  </div>
+
+  <div id="shatter-overlay"></div>
+
+  <main id="main-site" class="hidden">
+
+    <div class="cursor-dot" id="cursor-dot"></div>
+    <div class="cursor-ring" id="cursor-ring"></div>
+
+    <nav id="main-nav">
+      <div class="nav-logo">
+        <span class="nav-logo-sym">◈</span>
+        <span>ESPELHO DIGITAL</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#hero">INÍCIO</a></li>
+        <li><a href="#eu-digital">EU DIGITAL</a></li>
+        <li><a href="#teoria">TEORIA</a></li>
+        <li><a href="#timeline">LINHA DO TEMPO</a></li>
+        <li><a href="#ia">IA PSI</a></li>
+      </ul>
+      <div class="nav-toggle" id="nav-toggle"><span></span><span></span><span></span></div>
+    </nav>
+
+    <div class="mobile-nav" id="mobile-nav">
+      <a href="#hero">INÍCIO</a>
+      <a href="#eu-digital">EU DIGITAL</a>
+      <a href="#teoria">TEORIA</a>
+      <a href="#timeline">LINHA DO TEMPO</a>
+      <a href="#ia">IA PSICOLÓGICA</a>
+    </div>
+
+    <!-- HERO -->
+    <section id="hero">
+      <canvas id="hero-canvas"></canvas>
+      <div class="hero-content">
+        <div class="hero-eyebrow reveal-item">
+          <span class="eyebrow-line"></span>
+          <span>PROGRAMA SEMENTE DE INICIAÇÃO CIENTÍFICA</span>
+          <span class="eyebrow-line"></span>
+        </div>
+        <h1 class="hero-title reveal-item">
+          <span class="line-wrap"><span class="title-line">Nos Labirintos</span></span>
+          <span class="line-wrap"><span class="title-line title-em">do Espelho</span></span>
+          <span class="line-wrap"><span class="title-line">Digital</span></span>
+        </h1>
+        <p class="hero-sub reveal-item">
+          A idealização da imagem e o eclipse da alteridade<br/>na adolescência hiperconectada.
+        </p>
+        <div class="hero-meta reveal-item">
+          <div class="meta-item"><span class="meta-label">INSTITUIÇÃO</span><span class="meta-val">CESMAC DO AGRESTE</span></div>
+          <div class="meta-sep">|</div>
+          <div class="meta-item"><span class="meta-label">ÁREA</span><span class="meta-val">PSICOLOGIA</span></div>
+          <div class="meta-sep">|</div>
+          <div class="meta-item"><span class="meta-label">ANO</span><span class="meta-val">2025–2026</span></div>
+        </div>
+        <a href="#eu-digital" class="hero-cta reveal-item">
+          <span>INICIAR EXPERIÊNCIA</span>
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        </a>
+      </div>
+      <div class="hero-scroll-indicator">
+        <div class="scroll-line"></div>
+        <span>SCROLL</span>
+      </div>
+    </section>
+
+    <!-- EU DIGITAL -->
+    <section id="eu-digital">
+      <div class="eu-bg-grid"></div>
+      <div class="eu-content">
+        <div class="section-header reveal-item">
+          <span class="section-tag">01 — IDENTIDADE</span>
+          <h2>O Eu Digital</h2>
+        </div>
+        <div class="silhouette-wrapper">
+          <canvas id="silhouette-canvas"></canvas>
+          <div class="psych-phrases">
+            <p class="phrase active">"Quem você é sem a validação digital?"</p>
+            <p class="phrase">"Quantos filtros existem entre você e o outro?"</p>
+            <p class="phrase">"A imagem substituiu o encontro?"</p>
+            <p class="phrase">"O espelho digital reflete ou distorce?"</p>
+            <p class="phrase">"Você se reconheceria sem a tela?"</p>
+          </div>
+        </div>
+        <div class="eu-text reveal-item">
+          <p>O adolescente contemporâneo cresce atravessado por telas. Cada curtida, cada filtro, cada publicação — fragmentos de uma identidade construída para o olhar do outro.</p>
+          <p>A virtualidade não é um espaço paralelo: é o próprio tecido das relações, das identificações, dos espelhos nos quais o jovem aprende — ou desaprende — a se ver.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESUMO -->
+    <section id="resumo">
+      <div class="container">
+        <div class="section-header reveal-item">
+          <span class="section-tag">PESQUISA</span>
+          <h2>O Projeto</h2>
+        </div>
+        <div class="resumo-grid">
+          <div class="resumo-card glass-card reveal-item">
+            <div class="card-icon">◉</div>
+            <h3>Objetivo</h3>
+            <p>Investigar os efeitos do uso excessivo das redes sociais no desenvolvimento da alteridade e nas relações sociais dos adolescentes em um cenário cada vez mais digital.</p>
+          </div>
+          <div class="resumo-card glass-card reveal-item">
+            <div class="card-icon">◈</div>
+            <h3>Metodologia</h3>
+            <p>Pesquisa qualitativa e bibliográfica com abordagem indutiva, articulando psicanálise, psicologia do desenvolvimento e filosofia da alteridade.</p>
+          </div>
+          <div class="resumo-card glass-card reveal-item">
+            <div class="card-icon">◇</div>
+            <h3>Hipótese</h3>
+            <p>A virtualidade, quando utilizada de maneira excessiva e sem mediação, pode fragilizar habilidades sociais essenciais para o convívio humano e o encontro com o outro.</p>
+          </div>
+        </div>
+        <div class="equipe-wrap reveal-item">
+          <span class="section-tag">EQUIPE EXECUTORA</span>
+          <div class="equipe-grid">
+            <div class="membro"><span class="membro-role">Orientadora</span><span class="membro-name">Wildicleia de Oliveira Santos Lopes</span></div>
+            <div class="membro"><span class="membro-role">Coorientador</span><span class="membro-name">Cícero José Barbosa da Fonseca</span></div>
+            <div class="membro"><span class="membro-role">Pesquisadora</span><span class="membro-name">Jessica Mariane da Silva Santos</span></div>
+            <div class="membro"><span class="membro-role">Pesquisadora</span><span class="membro-name">Maria Eduarda Malta Ramos</span></div>
+            <div class="membro"><span class="membro-role">Pesquisadora</span><span class="membro-name">Franciele Caetano Soares da Silva</span></div>
+            <div class="membro"><span class="membro-role">Pesquisadora</span><span class="membro-name">Priscilla Silva Barbosa</span></div>
+            <div class="membro"><span class="membro-role">Pesquisadora</span><span class="membro-name">Ramyle Vívian de Lima Santos</span></div>
+            <div class="membro"><span class="membro-role">Pesquisadora</span><span class="membro-name">Emmily Vitória Barros Dos Prazeres</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEORIA -->
+    <section id="teoria">
+      <div class="container">
+        <div class="section-header reveal-item">
+          <span class="section-tag">02 — FUNDAMENTAÇÃO</span>
+          <h2>Arquitetura Teórica</h2>
+        </div>
+        <div class="teoria-grid">
+
+          <div class="teoria-card reveal-item">
+            <div class="teoria-card-inner">
+              <div class="teoria-front">
+                <div class="teoria-num">01</div>
+                <div class="teoria-avatar"><div class="avatar-ring"></div><span>S.F</span></div>
+                <h3>Sigmund Freud</h3>
+                <p class="teoria-dates">1856 — 1939</p>
+                <div class="teoria-tags"><span>Psicanálise</span><span>Mal-Estar</span></div>
+              </div>
+              <div class="teoria-back">
+                <p>"É difícil escapar à impressão de que em geral as pessoas usam medidas falsas, de que buscam poder, sucesso e riqueza para si mesmas e admiram aqueles que os têm, subestimando os autênticos valores da vida."</p>
+                <span class="teoria-obra">O Mal-Estar na Civilização, 1930</span>
+                <p class="teoria-contrib">A busca por reconhecimento nas redes sociais espelha o mal-estar freudiano: a civilização digital impõe renúncias e produz sofrimento psíquico.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="teoria-card reveal-item">
+            <div class="teoria-card-inner">
+              <div class="teoria-front">
+                <div class="teoria-num">02</div>
+                <div class="teoria-avatar"><div class="avatar-ring"></div><span>J.L</span></div>
+                <h3>Jacques Lacan</h3>
+                <p class="teoria-dates">1901 — 1981</p>
+                <div class="teoria-tags"><span>Estágio do Espelho</span><span>Outro</span></div>
+              </div>
+              <div class="teoria-back">
+                <p>O Estágio do Espelho (1949) revela como a imagem de si se constrói pelo olhar do outro. Na hiperconectividade, esse espelho é digital — editado, filtrado, idealizado.</p>
+                <span class="teoria-obra">Escritos, 1966</span>
+                <p class="teoria-contrib">As identificações contemporâneas se dão via imagens digitais curadas, intensificando idealizações e dificultando o reconhecimento da própria falta.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="teoria-card reveal-item">
+            <div class="teoria-card-inner">
+              <div class="teoria-front">
+                <div class="teoria-num">03</div>
+                <div class="teoria-avatar"><div class="avatar-ring"></div><span>Z.B</span></div>
+                <h3>Zygmunt Bauman</h3>
+                <p class="teoria-dates">1925 — 2017</p>
+                <div class="teoria-tags"><span>Modernidade Líquida</span><span>Vínculos</span></div>
+              </div>
+              <div class="teoria-back">
+                <p>A modernidade líquida dissolve vínculos sólidos. No ambiente virtual, relações tornam-se fluidas, descartáveis, substituíveis — o outro é trocado com um clique.</p>
+                <span class="teoria-obra">Modernidade Líquida, 2001</span>
+                <p class="teoria-contrib">A lógica relacional líquida dificulta o desenvolvimento da alteridade, pois o outro é facilmente descartado quando não corresponde às expectativas da tela.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="teoria-card reveal-item">
+            <div class="teoria-card-inner">
+              <div class="teoria-front">
+                <div class="teoria-num">04</div>
+                <div class="teoria-avatar"><div class="avatar-ring"></div><span>E.L</span></div>
+                <h3>Emmanuel Levinas</h3>
+                <p class="teoria-dates">1906 — 1995</p>
+                <div class="teoria-tags"><span>Alteridade</span><span>Rosto</span></div>
+              </div>
+              <div class="teoria-back">
+                <p>O encontro com o rosto do outro como fundamento ético das relações humanas. No virtual, esse rosto é mediado, fragmentado, ausente.</p>
+                <span class="teoria-obra">Totalidade e Infinito, 1961</span>
+                <p class="teoria-contrib">A ausência do corpo e da presença física reduz a percepção do outro como sujeito, favorecendo processos de desumanização online.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="teoria-card reveal-item">
+            <div class="teoria-card-inner">
+              <div class="teoria-front">
+                <div class="teoria-num">05</div>
+                <div class="teoria-avatar"><div class="avatar-ring"></div><span>H.W</span></div>
+                <h3>Henri Wallon</h3>
+                <p class="teoria-dates">1879 — 1962</p>
+                <div class="teoria-tags"><span>Afetividade</span><span>Emoção</span></div>
+              </div>
+              <div class="teoria-back">
+                <p>A afetividade ocupa lugar central no desenvolvimento humano. A mediação tecnológica reconfigura e pode esvaziar a densidade das relações afetivas.</p>
+                <span class="teoria-obra">A Evolução Psicológica da Criança, 1941</span>
+                <p class="teoria-contrib">A comunicação digital, embora ágil, limita a experiência do encontro com o outro, restringindo a construção da empatia e da alteridade.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="teoria-card reveal-item">
+            <div class="teoria-card-inner">
+              <div class="teoria-front">
+                <div class="teoria-num">06</div>
+                <div class="teoria-avatar"><div class="avatar-ring"></div><span>E.E</span></div>
+                <h3>Erik Erikson</h3>
+                <p class="teoria-dates">1902 — 1994</p>
+                <div class="teoria-tags"><span>Identidade</span><span>Crise</span></div>
+              </div>
+              <div class="teoria-back">
+                <p>A adolescência é marcada pelo conflito entre identidade e confusão de papéis. As redes ampliam identificações e intensificam a instabilidade do eu.</p>
+                <span class="teoria-obra">Identidade: Juventude e Crise, 1968</span>
+                <p class="teoria-contrib">O ambiente digital opera como espaço de experimentação identitária e de vulnerabilidade psíquica, exacerbando a crise eriksoniana.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <p class="teoria-instruction reveal-item">↗ Passe o cursor (ou toque) sobre os cards para expandir</p>
+      </div>
+    </section>
+
+    <!-- RESULTADOS -->
+    <section id="resultados">
+      <div class="container">
+        <div class="section-header reveal-item">
+          <span class="section-tag">RESULTADOS</span>
+          <h2>Descobertas da Pesquisa</h2>
+        </div>
+        <div class="resultado-blocks">
+          <div class="resultado-block reveal-item">
+            <div class="rb-number">01</div>
+            <div class="rb-content">
+              <h3>Identidade Fragmentada</h3>
+              <p>O ambiente digital opera simultaneamente como espaço de experimentação identitária e de vulnerabilidade psíquica. As redes promovem uma lógica de comparação constante, reforçando ideais inalcançáveis e contribuindo para sentimentos de inadequação e ansiedade.</p>
+            </div>
+          </div>
+          <div class="resultado-block reveal-item">
+            <div class="rb-number">02</div>
+            <div class="rb-content">
+              <h3>Eclipse da Afetividade</h3>
+              <p>A mediação tecnológica reconfigura formas de expressão afetiva, esvaziando a densidade das relações e reduzindo a interação a respostas imediatas e superficiais.</p>
+            </div>
+          </div>
+          <div class="resultado-block reveal-item">
+            <div class="rb-number">03</div>
+            <div class="rb-content">
+              <h3>Vínculos Líquidos</h3>
+              <p>As relações no ambiente virtual tendem a ser mais fluidas e instáveis, impactando a capacidade do adolescente de manter laços duradouros e dificultando o desenvolvimento da alteridade.</p>
+            </div>
+          </div>
+          <div class="resultado-block reveal-item">
+            <div class="rb-number">04</div>
+            <div class="rb-content">
+              <h3>Desumanização Digital</h3>
+              <p>A ausência do corpo e da presença física reduz a percepção do outro como sujeito, comprometendo o respeito à diferença e favorecendo agressividade, exclusão e indiferença online.</p>
+            </div>
+          </div>
+          <div class="resultado-block reveal-item">
+            <div class="rb-number">05</div>
+            <div class="rb-content">
+              <h3>Virtualidade como Possibilidade</h3>
+              <p>A virtualidade não deve ser compreendida apenas como espaço de risco. As redes podem funcionar como dispositivos de apoio — desde que acompanhadas de orientação e reflexão crítica.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TIMELINE -->
+    <section id="timeline">
+      <div class="timeline-header reveal-item">
+        <span class="section-tag">03 — CRONOLOGIA</span>
+        <h2>A Ascensão da Hiperconectividade</h2>
+      </div>
+      <div class="timeline-track">
+        <div class="timeline-rail"></div>
+        <div class="timeline-items">
+          <div class="tl-item reveal-item">
+            <div class="tl-dot"><span></span></div>
+            <div class="tl-card glass-card"><span class="tl-year">1949</span><h3>Estágio do Espelho</h3><p>Lacan formula a teoria do espelho, fundando a compreensão de como a identidade se constrói pelo olhar do outro.</p></div>
+          </div>
+          <div class="tl-item reveal-item">
+            <div class="tl-dot"><span></span></div>
+            <div class="tl-card glass-card"><span class="tl-year">1991</span><h3>World Wide Web</h3><p>A internet pública transforma os modos de comunicação, aproximando e ao mesmo tempo mediando corpos, vozes, rostos.</p></div>
+          </div>
+          <div class="tl-item reveal-item">
+            <div class="tl-dot"><span></span></div>
+            <div class="tl-card glass-card"><span class="tl-year">2004</span><h3>Era das Redes Sociais</h3><p>As grandes plataformas inauguram a era da performance de si. A identidade passa a ser construída para o feed.</p></div>
+          </div>
+          <div class="tl-item reveal-item">
+            <div class="tl-dot"><span></span></div>
+            <div class="tl-card glass-card"><span class="tl-year">2010</span><h3>Smartphone e Selfie</h3><p>A câmera frontal torna o rosto imagem. O adolescente aprende a se medir em curtidas, a existir na tela para existir no mundo.</p></div>
+          </div>
+          <div class="tl-item reveal-item">
+            <div class="tl-dot"><span></span></div>
+            <div class="tl-card glass-card"><span class="tl-year">2016</span><h3>Hiperconectividade</h3><p>Adolescentes passam mais de 7 horas/dia em telas. A alteridade se fragmenta em pixels e notificações.</p></div>
+          </div>
+          <div class="tl-item reveal-item">
+            <div class="tl-dot"><span></span></div>
+            <div class="tl-card glass-card"><span class="tl-year">2020</span><h3>Pandemia Digital</h3><p>O lockdown força a vida inteira para as telas. O encontro presencial com o outro torna-se impossível.</p></div>
+          </div>
+          <div class="tl-item reveal-item">
+            <div class="tl-dot"><span></span></div>
+            <div class="tl-card glass-card"><span class="tl-year">2025</span><h3>Labirintos do Espelho</h3><p>Esta pesquisa. Um olhar psicanalítico sobre o adolescente que cresce dentro do espelho digital.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- IA -->
+    <section id="ia">
+      <div class="ia-bg"></div>
+      <div class="container">
+        <div class="section-header reveal-item">
+          <span class="section-tag">04 — ASSISTENTE</span>
+          <h2>Psi·IA</h2>
+          <p class="ia-desc">Assistente digital especializada no projeto. Explore conceitos, questione paradigmas.</p>
+        </div>
+        <div class="ia-interface reveal-item">
+          <div class="ia-header">
+            <div class="ia-status"><div class="ia-status-dot"></div><span>PSI·IA ATIVA</span></div>
+            <span class="ia-model">ESPELHO DIGITAL v1.0</span>
+          </div>
+          <div class="ia-chat" id="ia-chat">
+            <div class="ia-message ia-msg">
+              <div class="ia-msg-avatar">◈</div>
+              <div class="ia-msg-bubble">
+                <p>Olá. Sou a <strong>Psi·IA</strong>, assistente digital deste projeto de pesquisa.</p>
+                <p>Fui criada para dialogar sobre <em>adolescência, alteridade, psicanálise e hiperconectividade</em>. O que você deseja explorar?</p>
+              </div>
+            </div>
+          </div>
+          <div class="ia-suggestions">
+            <button class="ia-sug" type="button">O que é alteridade?</button>
+            <button class="ia-sug" type="button">Explique o estágio do espelho de Lacan</button>
+            <button class="ia-sug" type="button">Como as redes sociais afetam adolescentes?</button>
+            <button class="ia-sug" type="button">O que é modernidade líquida?</button>
+            <button class="ia-sug" type="button">Qual a conclusão da pesquisa?</button>
+          </div>
+          <div class="ia-input-area">
+            <input type="text" id="ia-input" placeholder="Digite sua pergunta..." autocomplete="off" />
+            <button id="ia-send" type="button" aria-label="Enviar">
+              <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONCLUSÃO -->
+    <section id="conclusao">
+      <div class="container">
+        <div class="conclusao-content reveal-item">
+          <span class="section-tag">CONCLUSÃO</span>
+          <blockquote class="conclusao-quote">
+            "É necessário promover um uso mais consciente das tecnologias, incentivando relações pautadas no respeito, na empatia e no reconhecimento do outro — tanto no ambiente virtual quanto no presencial."
+          </blockquote>
+          <p class="conclusao-text">O sujeito se constitui na relação com o outro. Quando essa relação é predominantemente mediada por telas, podem surgir dificuldades na construção de vínculos consistentes e no reconhecimento do outro em sua dimensão humana.</p>
+          <p class="conclusao-text">A virtualidade não é apenas risco — é também possibilidade. O que se evidencia é a importância de um equilíbrio entre as dimensões virtual e presencial, sustentado por escuta, orientação e reflexão crítica.</p>
+        </div>
+        <div class="palavras-chave reveal-item">
+          <span class="section-tag">PALAVRAS-CHAVE</span>
+          <div class="tags-wrap">
+            <span class="kw-tag">Adolescência</span>
+            <span class="kw-tag">Redes Sociais</span>
+            <span class="kw-tag">Virtualidade</span>
+            <span class="kw-tag">Alteridade</span>
+            <span class="kw-tag">Relações Sociais</span>
+            <span class="kw-tag">Psicanálise</span>
+            <span class="kw-tag">Identidade</span>
+            <span class="kw-tag">Hiperconectividade</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footer-inner">
+        <div class="footer-logo">◈ ESPELHO DIGITAL</div>
+        <div class="footer-info">
+          <p>FEJAL — Faculdade CESMAC do Agreste</p>
+          <p>Núcleo de Apoio à Pesquisa — NAP</p>
+          <p>PSIC AGRESTE 2025–2026 · Arapiraca, Alagoas</p>
+        </div>
+        <div class="footer-line"></div>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+/* ============================================================
+   ESPELHO DIGITAL — SCRIPT SYSTEM (CORRIGIDO)
+   Faculdade CESMAC do Agreste · PSIC AGRESTE 2025-2026
+   ============================================================ */
+
+'use strict';
+
+// ── STATE ────────────────────────────────────────────────────
+const state = {
+  mouse: { x: -999, y: -999, rx: 0.5, ry: 0.5 },
+  phraseIdx: 0,
+  loaded: false,
+  siteReady: false
+};
+
+// ── UTILITY ──────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+const qs = (sel) => document.querySelector(sel);
+const qsa = (sel) => [...document.querySelectorAll(sel)];
+const rand = (a, b) => Math.random() * (b - a) + a;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const isTouch = window.matchMedia('(hover: none)').matches;
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ── MOUSE TRACKING ───────────────────────────────────────────
+document.addEventListener('mousemove', (e) => {
+  state.mouse.x = e.clientX;
+  state.mouse.y = e.clientY;
+  state.mouse.rx = e.clientX / window.innerWidth;
+  state.mouse.ry = e.clientY / window.innerHeight;
+}, { passive: true });
+
+// ── CUSTOM CURSOR (desativado em touch) ──────────────────────
+(function initCursor() {
+  const dot  = $('cursor-dot');
+  const ring = $('cursor-ring');
+  if (!dot || !ring) return;
+
+  if (isTouch) {
+    dot.style.display = 'none';
+    ring.style.display = 'none';
+    document.body.style.cursor = 'auto';
+    return;
+  }
+
+  let tx = 0, ty = 0;
+  function loop() {
+    tx += (state.mouse.x - tx) * 0.12;
+    ty += (state.mouse.y - ty) * 0.12;
+    dot.style.transform  = `translate(${state.mouse.x}px, ${state.mouse.y}px) translate(-50%,-50%)`;
+    ring.style.transform = `translate(${tx}px, ${ty}px) translate(-50%,-50%)`;
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  document.addEventListener('mouseover', (e) => {
+    if (e.target.closest('a, button, .teoria-card, .ia-sug, .mirror-container')) {
+      ring.classList.add('hover');
+    }
+  });
+  document.addEventListener('mouseout', (e) => {
+    if (e.target.closest('a, button, .teoria-card, .ia-sug, .mirror-container')) {
+      ring.classList.remove('hover');
+    }
+  });
+})();
+
+// ── LOADER ───────────────────────────────────────────────────
+(function initLoader() {
+  const canvas = $('loader-canvas');
+  let stop = false;
+
+  if (canvas && !reduceMotion) {
+    const ctx = canvas.getContext('2d');
+    let W, H;
+    const particles = [];
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    for (let i = 0; i < 90; i++) {
+      particles.push({
+        x: rand(0, window.innerWidth),
+        y: rand(0, window.innerHeight),
+        r: rand(0.5, 2),
+        vx: rand(-0.3, 0.3),
+        vy: rand(-0.3, 0.3),
+        o: rand(0.1, 0.5)
+      });
+    }
+
+    (function draw() {
+      if (stop) return;
+      ctx.clearRect(0, 0, W, H);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0,200,255,${p.o})`;
+        ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    })();
+  }
+
+  setTimeout(() => {
+    const bar = qs('.loader-bar');
+    if (bar) bar.style.width = '100%';
+  }, 100);
+
+  setTimeout(() => {
+    stop = true;
+    state.loaded = true;
+    const loader = $('loader');
+    if (loader) loader.classList.add('done');
+    initMirrorIntro();
+  }, 2600);
+})();
+
+// ── MIRROR INTRO ─────────────────────────────────────────────
+function initMirrorIntro() {
+  const container = $('mirror-container');
+  const canvas = $('mirror-canvas');
+
+  // Garantia: se algo faltar no HTML, entra direto no site (nunca trava).
+  if (!container || !canvas) { shatterMirror(); return; }
+
+  const ctx = canvas.getContext('2d');
+  const pbCanvas = $('particle-bg');
+  const pbCtx = pbCanvas ? pbCanvas.getContext('2d') : null;
+
+  let W = canvas.offsetWidth  || 400;
+  let H = canvas.offsetHeight || 500;
+  canvas.width = W; canvas.height = H;
+  if (pbCanvas) {
+    pbCanvas.width  = window.innerWidth;
+    pbCanvas.height = window.innerHeight;
+  }
+
+  const mirrorParticles = [];
+  for (let i = 0; i < 60; i++) {
+    mirrorParticles.push({
+      x: rand(0, W), y: rand(0, H),
+      r: rand(0.5, 2.5),
+      vx: rand(-0.4, 0.4), vy: rand(-0.4, 0.4),
+      o: rand(0.1, 0.6),
+      color: Math.random() > 0.7 ? '255,255,255' : '0,200,255'
+    });
+  }
+
+  const bgParticles = [];
+  for (let i = 0; i < 100; i++) {
+    bgParticles.push({
+      x: rand(0, window.innerWidth),
+      y: rand(0, window.innerHeight),
+      r: rand(0.3, 1.5),
+      vx: rand(-0.15, 0.15), vy: rand(-0.15, 0.15),
+      o: rand(0.05, 0.3)
+    });
+  }
+
+  let t = 0, animId = null, running = true;
+
+  function drawMirror() {
+    if (!running) return;
+    t++;
+    const rect = container.getBoundingClientRect();
+    const mx = state.mouse.x - rect.left;
+    const my = state.mouse.y - rect.top;
+
+    ctx.clearRect(0, 0, W, H);
+
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0,   '#060d18');
+    grad.addColorStop(0.4, '#0a1826');
+    grad.addColorStop(1,   '#030a12');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    if (mx > 0 && mx < W && my > 0 && my < H) {
+      const mg = ctx.createRadialGradient(mx, my, 0, mx, my, 160);
+      mg.addColorStop(0, 'rgba(0,200,255,0.08)');
+      mg.addColorStop(1, 'rgba(0,200,255,0)');
+      ctx.fillStyle = mg;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    const cg = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, H * 0.6);
+    cg.addColorStop(0, `rgba(0,119,182,${0.06 + 0.02 * Math.sin(t * 0.02)})`);
+    cg.addColorStop(0.5, 'rgba(0,50,100,0.04)');
+    cg.addColorStop(1, 'rgba(0,50,100,0)');
+    ctx.fillStyle = cg;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.strokeStyle = `rgba(0,200,255,${0.3 + 0.1 * Math.sin(t * 0.03)})`;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(1, 1, W - 2, H - 2);
+    ctx.strokeStyle = 'rgba(0,200,255,0.1)';
+    ctx.strokeRect(8, 8, W - 16, H - 16);
+
+    const scanY = (t * 1.5) % (H + 40) - 20;
+    const sl = ctx.createLinearGradient(0, scanY - 2, 0, scanY + 2);
+    sl.addColorStop(0, 'rgba(0,200,255,0)');
+    sl.addColorStop(0.5, 'rgba(0,200,255,0.15)');
+    sl.addColorStop(1, 'rgba(0,200,255,0)');
+    ctx.fillStyle = sl;
+    ctx.fillRect(0, scanY - 2, W, 4);
+
+    ctx.strokeStyle = 'rgba(0,200,255,0.06)';
+    ctx.lineWidth = 0.5;
+    [[W*0.5, 0, W*0.3, H*0.4],
+     [W*0.5, H*0.4, W*0.7, H*0.8],
+     [W*0.5, H*0.4, W*0.2, H*0.7],
+     [W*0.5, H*0.4, W*0.6, H]].forEach(([x1,y1,x2,y2]) => {
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    });
+
+    mirrorParticles.forEach(p => {
+      const dx = mx - p.x, dy = my - p.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      if (dist < 100) { p.vx -= (dx / dist) * 0.3; p.vy -= (dy / dist) * 0.3; }
+      p.vx *= 0.96; p.vy *= 0.96;
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${p.color},${p.o})`;
+      ctx.fill();
+    });
+
+    if (pbCtx) {
+      pbCtx.clearRect(0, 0, pbCanvas.width, pbCanvas.height);
+      bgParticles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = pbCanvas.width;
+        if (p.x > pbCanvas.width)  p.x = 0;
+        if (p.y < 0) p.y = pbCanvas.height;
+        if (p.y > pbCanvas.height) p.y = 0;
+        pbCtx.beginPath();
+        pbCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        pbCtx.fillStyle = `rgba(0,200,255,${p.o})`;
+        pbCtx.fill();
+      });
+    }
+
+    animId = requestAnimationFrame(drawMirror);
+  }
+  drawMirror();
+
+  function enter() {
+    if (!running) return;         // impede clique duplo
+    running = false;
+    if (animId) cancelAnimationFrame(animId);
+    shatterMirror();
+  }
+
+  container.addEventListener('click', enter);
+  container.addEventListener('touchstart', (e) => { e.preventDefault(); enter(); }, { passive: false });
+  // Escape de segurança: qualquer tecla também atravessa o espelho
+  document.addEventListener('keydown', enter, { once: true });
+}
+
+// ── GLASS SHATTER ────────────────────────────────────────────
+function shatterMirror() {
+  if (state.siteReady) return;
+  state.siteReady = true;
+
+  const overlay = $('shatter-overlay');
+  const intro   = $('mirror-intro');
+  const site    = $('main-site');
+
+  if (overlay && !reduceMotion) {
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    for (let i = 0; i < 24; i++) {
+      const shard = document.createElement('div');
+      shard.className = 'shard';
+      const size  = rand(60, 200);
+      const angle = rand(0, 360);
+      const dist  = rand(200, 800);
+      shard.style.cssText = `
+        left:${cx - size/2 + rand(-100,100)}px;
+        top:${cy - size/2 + rand(-100,100)}px;
+        width:${size}px;height:${size}px;
+        --tx:${Math.cos(angle * Math.PI/180) * dist}px;
+        --ty:${Math.sin(angle * Math.PI/180) * dist}px;
+        --rot:${rand(-540,540)}deg;--dur:${rand(0.6,1.2)}s;
+        animation-delay:${rand(0,0.15)}s;`;
+      overlay.appendChild(shard);
+    }
+  }
+
+  setTimeout(() => {
+    if (intro) intro.classList.add('gone');
+    if (site) {
+      site.classList.remove('hidden');
+      requestAnimationFrame(() => site.classList.add('visible'));
+    }
+
+    initHero();
+    initSilhouette();
+    initIntersectionObserver();
+    initTimeline();
+    initPhraseCycle();
+    initNavScroll();
+    initNavToggle();
+    animateHeroTitles();
+
+    setTimeout(() => {
+      if (intro) intro.style.display = 'none';
+      if (overlay) { overlay.innerHTML = ''; overlay.style.display = 'none'; }
+    }, 1800);
+  }, 400);
+}
+
+// ── HERO CANVAS ──────────────────────────────────────────────
+function initHero() {
+  const canvas = $('hero-canvas');
+  if (!canvas || reduceMotion) return;
+  const ctx = canvas.getContext('2d');
+  let W = 0, H = 0, pts = [];
+
+  function resize() {
+    W = canvas.width  = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+    const count = W < 700 ? 45 : 90;
+    pts = [];
+    for (let i = 0; i < count; i++) {
+      pts.push({
+        x: rand(0, W), y: rand(0, H),
+        vx: rand(-0.2, 0.2), vy: rand(-0.2, 0.2),
+        r: rand(0.5, 2.5), o: rand(0.05, 0.4),
+        color: Math.random() > 0.8 ? '0,200,255' : '0,119,182'
+      });
+    }
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(0,100,150,0.06)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+        if (dx*dx + dy*dy < 12000) {
+          ctx.moveTo(pts[i].x, pts[i].y);
+          ctx.lineTo(pts[j].x, pts[j].y);
+        }
+      }
+    }
+    ctx.stroke();
+
+    const rect = canvas.getBoundingClientRect();
+    pts.forEach(p => {
+      const dx = (state.mouse.x - rect.left) - p.x;
+      const dy = (state.mouse.y - rect.top) - p.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      if (dist < 120) { p.vx += (dx / dist) * 0.05; p.vy += (dy / dist) * 0.05; }
+      p.vx *= 0.98; p.vy *= 0.98;
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${p.color},${p.o})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ── ANIMATE HERO TITLES ──────────────────────────────────────
+function animateHeroTitles() {
+  qsa('.title-line').forEach((line, i) => {
+    setTimeout(() => line.classList.add('in'), 200 + i * 180);
+  });
+  qsa('#hero .reveal-item').forEach((el, i) => {
+    setTimeout(() => el.classList.add('revealed'), 300 + i * 120);
+  });
+}
+
+// ── SILHOUETTE CANVAS ────────────────────────────────────────
+function initSilhouette() {
+  const canvas = $('silhouette-canvas');
+  if (!canvas || reduceMotion) return;
+  const ctx = canvas.getContext('2d');
+  let W = 0, H = 0;
+  const pts = [];
+
+  function resize() {
+    W = canvas.width  = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+
+  function buildSilhouette() {
+    pts.length = 0;
+    const cx = W / 2, cy = H / 2;
+    const hw = Math.min(W, 600);
+    const push = (ox, oy) => pts.push({ ox, oy, x: ox, y: oy, vx: 0, vy: 0 });
+
+    for (let i = 0; i < 220; i++) {                       // cabeça
+      const a = rand(0, Math.PI * 2), r = rand(0, hw * 0.09);
+      push(cx + Math.cos(a) * r, cy - hw * 0.32 + Math.sin(a) * r);
+    }
+    for (let i = 0; i < 50; i++)                          // pescoço
+      push(cx + rand(-hw*0.025, hw*0.025), cy + rand(-hw*0.215, -hw*0.185));
+    for (let i = 0; i < 420; i++)                         // tronco
+      push(cx + rand(-hw*0.12, hw*0.12), cy + rand(-hw*0.18, hw*0.1));
+    for (const side of [-1, 1])                           // braços
+      for (let i = 0; i < 150; i++)
+        push(cx + side * (hw*0.12 + rand(0,1) * hw*0.18), cy + rand(-hw*0.17, hw*0.08));
+    for (const side of [-0.05, 0.05])                     // pernas
+      for (let i = 0; i < 180; i++)
+        push(cx + side * hw + rand(-hw*0.055, hw*0.055), cy + rand(hw*0.1, hw*0.38));
+  }
+
+  resize(); buildSilhouette();
+  window.addEventListener('resize', () => { resize(); buildSilhouette(); });
+
+  let fragmentation = 0;
+  window.addEventListener('scroll', () => {
+    const sec = $('eu-digital');
+    if (!sec) return;
+    const rect = sec.getBoundingClientRect();
+    fragmentation = clamp(-rect.top / sec.offsetHeight, 0, 1);
+  }, { passive: true });
+
+  function draw() {
+    const rect = canvas.getBoundingClientRect();
+    // Pausa quando fora da tela: evita travar a página
+    if (rect.bottom < 0 || rect.top > window.innerHeight) {
+      requestAnimationFrame(draw);
+      return;
+    }
+    ctx.clearRect(0, 0, W, H);
+    const mx = state.mouse.x - rect.left;
+    const my = state.mouse.y - rect.top;
+    const alpha = clamp(1 - fragmentation * 1.2, 0, 1);
+
+    pts.forEach(p => {
+      const dx = mx - p.ox, dy = my - p.oy;
+      const dist = Math.hypot(dx, dy) || 1;
+      const force = Math.max(0, 80 - dist) / 80;
+      const fx = -(dx / dist) * force * 30;
+      const fy = -(dy / dist) * force * 30;
+
+      const fragX = fragmentation > 0.3
+        ? (p.ox - W/2) * fragmentation * 1.5 + rand(-fragmentation*40, fragmentation*40) : 0;
+      const fragY = fragmentation > 0.3 ? fragmentation * 60 : 0;
+
+      p.vx += ((p.ox + fx + fragX) - p.x) * 0.1;
+      p.vy += ((p.oy + fy + fragY) - p.y) * 0.1;
+      p.vx *= 0.8; p.vy *= 0.8;
+      p.x += p.vx; p.y += p.vy;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, rand(0.5, 1.5), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${dist < 60 ? '0,200,255' : '0,150,220'},${alpha * rand(0.3, 0.8)})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ── PHRASE CYCLE ─────────────────────────────────────────────
+function initPhraseCycle() {
+  const phrases = qsa('.phrase');
+  if (phrases.length < 2) return;
+  setInterval(() => {
+    phrases[state.phraseIdx].classList.remove('active');
+    state.phraseIdx = (state.phraseIdx + 1) % phrases.length;
+    phrases[state.phraseIdx].classList.add('active');
+  }, 3200);
+}
+
+// ── INTERSECTION OBSERVER (REVEAL) ───────────────────────────
+function initIntersectionObserver() {
+  const items = qsa('.reveal-item');
+  if (!('IntersectionObserver' in window)) {
+    items.forEach(el => el.classList.add('revealed'));
+    return;
+  }
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('revealed');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  items.forEach(el => obs.observe(el));
+}
+
+// ── TIMELINE SCROLL ──────────────────────────────────────────
+function initTimeline() {
+  const track = qs('.timeline-track');
+  if (!track) return;
+  track.addEventListener('wheel', (e) => {
+    const atStart = track.scrollLeft <= 0;
+    const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    // Só sequestra a roda se ainda houver trilho para percorrer
+    if ((e.deltaY < 0 && atStart) || (e.deltaY > 0 && atEnd)) return;
+    e.preventDefault();
+    track.scrollLeft += e.deltaY * 0.8;
+  }, { passive: false });
+}
+
+// ── NAV ──────────────────────────────────────────────────────
+function initNavScroll() {
+  const nav = $('main-nav');
+  if (nav) {
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 80);
+    }, { passive: true });
+  }
+  qsa('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', (e) => {
+      const target = $(a.getAttribute('href').slice(1));
+      if (!target) return;
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth' });
+      const mob = $('mobile-nav');
+      if (mob) mob.classList.remove('open');
+    });
+  });
+}
+
+function initNavToggle() {
+  const btn = $('nav-toggle');
+  const mob = $('mobile-nav');
+  if (!btn || !mob) return;
+  btn.addEventListener('click', () => mob.classList.toggle('open'));
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHATBOT LOCAL — 100% offline, funciona em GitHub Pages
+// ══════════════════════════════════════════════════════════════
+
+const KB = [
+  {
+    keys: ['projeto','pesquisa','sobre','trata','tema','titulo','espelho digital','labirintos','o que e'],
+    answer: `<p>Este projeto se chama <strong>"Nos Labirintos do Espelho Digital: A idealização da imagem e o eclipse da alteridade na adolescência hiperconectada"</strong>.</p>
+<p>Foi desenvolvido na <strong>Faculdade CESMAC do Agreste (FEJAL)</strong>, em Arapiraca-AL, dentro do <strong>Programa Semente de Iniciação Científica – PSIC AGRESTE 2025-2026</strong>, vinculado ao Núcleo de Apoio à Pesquisa (NAP).</p>
+<p>O objetivo central é investigar os efeitos do uso excessivo das redes sociais e outras formas de comunicação virtual no <strong>desenvolvimento da alteridade</strong> e nas relações sociais dos adolescentes.</p>`
+  },
+  {
+    keys: ['objetivo','objetivos','proposito','finalidade','pretende','investigar'],
+    answer: `<p>O <strong>objetivo principal</strong> é compreender de que maneira a virtualidade, usada de forma excessiva, interfere nas relações sociais dos adolescentes e no desenvolvimento da alteridade.</p>
+<p>→ Analisar como o ambiente digital influenciou a construção da identidade adolescente;<br>
+→ Investigar como os jovens vivenciam suas relações no mundo virtual e as consequências para o presencial;<br>
+→ Compreender como a internet molda a forma como os jovens lidam com a diferença e com a própria identidade.</p>
+<p>A pesquisa também visa promover reflexões que contribuam para um <strong>uso mais consciente das tecnologias</strong>.</p>`
+  },
+  {
+    keys: ['hipotese','pressuposto','parte de'],
+    answer: `<p>O projeto parte da hipótese de que <strong>a virtualidade, quando utilizada de maneira excessiva e sem mediação, pode fragilizar habilidades sociais importantes para o convívio humano</strong>.</p>
+<p>Isso inclui dificuldades em expressar empatia, dialogar de forma assertiva, criar vínculos significativos e reconhecer o outro como sujeito — especialmente nas interações presenciais.</p>`
+  },
+  {
+    keys: ['metodologia','metodo','como foi feita','abordagem','qualitativa','bibliografica','etapas'],
+    answer: `<p>O projeto adota uma <strong>abordagem qualitativa e bibliográfica</strong>, com perspectiva indutiva.</p>
+<p>Inicialmente estava estruturado em duas etapas: revisão bibliográfica e pesquisa de campo com entrevistas em escolas. As exigências éticas, logísticas e o tempo disponível para pesquisa com menores de idade tornaram a etapa de campo inviável no cronograma.</p>
+<p>Por isso, a pesquisa foi <strong>reformulada para um estudo exclusivamente bibliográfico</strong> — articulando psicanálise, psicologia do desenvolvimento e filosofia da alteridade.</p>`
+  },
+  {
+    keys: ['alteridade','o outro','reconhecer outro','diferenca','outro como sujeito'],
+    answer: `<p><strong>Alteridade</strong> é a capacidade de reconhecer o outro como um ser diferente, com opiniões, sentimentos e formas de pensar próprias. É a abertura ao encontro genuíno com o diferente.</p>
+<p>Na perspectiva de <strong>Emmanuel Levinas</strong>, o encontro com o rosto do outro é o fundamento ético das relações humanas. No ambiente virtual, esse rosto é frequentemente mediado, fragmentado ou ausente.</p>
+<p>Nesta pesquisa, a alteridade é entendida como uma habilidade que se desenvolve principalmente nas <strong>interações presenciais</strong> — na escuta ativa, na convivência e na empatia.</p>`
+  },
+  {
+    keys: ['lacan','estagio do espelho','estadio','espelho','identificacao','imagem','outro simbolico'],
+    answer: `<p><strong>Jacques Lacan</strong> (1901–1981) formulou em 1949 a teoria do <strong>Estádio do Espelho</strong>: a criança passa a se reconhecer como um eu unificado ao ver sua imagem refletida.</p>
+<p>Na hiperconectividade, o adolescente encontra um espelho digital — <strong>editado, filtrado, idealizado</strong>. Esse espelho intensifica processos identificatórios marcados por idealizações e pode dificultar o reconhecimento da própria falta.</p>
+<p>As identificações contemporâneas se dão não apenas na relação com o semelhante, mas via <strong>imagens digitais cuidadosamente curadas</strong>.</p>`
+  },
+  {
+    keys: ['freud','mal-estar','mal estar','civilizacao','reconhecimento','aprovacao'],
+    answer: `<p><strong>Sigmund Freud</strong> (1856–1939) contribui especialmente por <em>O Mal-Estar na Civilização</em> (1930), onde já apontava as estranhezas do processo civilizatório.</p>
+<p>Na contemporaneidade isso se potencializa: a busca por curtidas, seguidores e aprovação digital é uma versão amplificada desse mal-estar, com <strong>ideais e admirações inatingíveis</strong> produzidos para gerar efeitos de perfeição.</p>
+<p>O sofrimento psíquico do adolescente hiperconectado não é novo — é uma expressão contemporânea de uma tensão estrutural entre o sujeito e a civilização.</p>`
+  },
+  {
+    keys: ['bauman','modernidade liquida','liquida','vinculos','descartavel','relacoes passageiras'],
+    answer: `<p><strong>Zygmunt Bauman</strong> (1925–2017) e a <strong>Modernidade Líquida</strong>: os vínculos sólidos se dissolvem e as relações tornam-se fluidas, instáveis e descartáveis.</p>
+<p>No ambiente virtual, o outro pode ser bloqueado, ignorado ou substituído com um clique. As relações online, embora aparentemente intensas, são muitas vezes superficiais — gerando <strong>solidão, ansiedade e dificuldade de conexão emocional</strong>.</p>
+<p>Essa lógica dificulta o desenvolvimento da alteridade e leva o adolescente a buscar nas redes um reconhecimento precário e temporário.</p>`
+  },
+  {
+    keys: ['levinas','rosto','etica','exterioridade','totalidade','infinito','encontro etico'],
+    answer: `<p><strong>Emmanuel Levinas</strong> (1906–1995) fundamenta a discussão sobre <strong>ética da alteridade</strong>. Em <em>Totalidade e Infinito</em> (1961), o encontro com o rosto do outro é o fundamento ético das relações humanas.</p>
+<p>No contexto virtual, esse encontro é frequentemente <strong>mediado ou ausente</strong>: não vemos o rosto real, não percebemos o corpo, não sentimos a presença — o que favorece processos de desumanização.</p>
+<p>A ausência do corpo reduz a percepção do outro como sujeito, comprometendo o respeito ao que é da ordem da diferença.</p>`
+  },
+  {
+    keys: ['wallon','afetividade','emocao','expressao afetiva','desenvolvimento afetivo'],
+    answer: `<p><strong>Henri Wallon</strong> (1879–1962) destaca que a <strong>afetividade ocupa lugar central no desenvolvimento humano</strong>. As emoções e trocas afetivas são estruturantes do psiquismo desde a infância.</p>
+<p>A mediação tecnológica tende a <strong>reconfigurar as formas de expressão afetiva</strong>, esvaziando a densidade das relações e restringindo a interação a respostas imediatas e superficiais.</p>
+<p>Isso repercute na construção da empatia e da alteridade.</p>`
+  },
+  {
+    keys: ['erikson','identidade','crise','confusao de papeis','construcao do eu'],
+    answer: `<p><strong>Erik Erikson</strong> (1902–1994), em <em>Identidade: Juventude e Crise</em> (1968), descreve a adolescência pelo conflito entre <strong>identidade e confusão de papéis</strong>.</p>
+<p>É quando o indivíduo constrói sua identidade, questiona padrões e busca autonomia. O contato com o outro é essencial nesse processo.</p>
+<p>As redes sociais <strong>ampliam as possibilidades de identificação</strong>, mas intensificam a instabilidade e a fragmentação do eu, exacerbando a crise eriksoniana pela comparação constante.</p>`
+  },
+  {
+    keys: ['adolescencia','adolescente','jovem','puberdade','nativo digital','geracao'],
+    answer: `<p>A <strong>adolescência</strong> é entendida como fase crucial do desenvolvimento — período de descobertas, transformação da identidade e necessidade de pertencimento.</p>
+<p>Piletti (2024, p.155) define a adolescência como fase preparatória para a entrada no mundo adulto, caracterizada por alterações corporais, hormonais, psicológicas, cognitivas e sociais.</p>
+<p>Os "nativos digitais" cresceram com o mundo virtual presente em quase todas as dimensões da vida — o que molda comportamentos, emoções e percepções sobre o outro e sobre si.</p>`
+  },
+  {
+    keys: ['redes sociais','instagram','tiktok','whatsapp','plataformas','curtidas','filtros','feed','algoritmo'],
+    answer: `<p>As <strong>redes sociais</strong> são o objeto central desta pesquisa. Instagram, TikTok e WhatsApp transformaram as formas de comunicação e relacionamento entre adolescentes.</p>
+<p>As interações são marcadas por <strong>filtros, curtidas, comentários rápidos e busca constante por aprovação</strong>, com construções de imagem que buscam efeitos de perfeição.</p>
+<p>O problema não está na tecnologia em si, mas na <strong>forma como é utilizada</strong>: com consciência, é ferramenta positiva; em excesso e sem mediação, traz prejuízos ao desenvolvimento humano e social.</p>`
+  },
+  {
+    keys: ['resultado','resultados','conclusao','concluiu','descobriu','achados','o que encontrou'],
+    answer: `<p>Os resultados indicam que o <strong>desenvolvimento da alteridade na adolescência contemporânea é profundamente atravessado pelas transformações nas formas de laço social</strong>.</p>
+<p>→ Novos atravessamentos mediados pela virtualidade na construção da identidade (Erikson);<br>
+→ A mediação tecnológica reconfigura expressões afetivas (Wallon);<br>
+→ Identificações via imagens digitais idealizadas (Lacan);<br>
+→ Vínculos virtuais mais fluidos e descartáveis (Bauman);<br>
+→ A ausência do rosto compromete o exercício ético com o outro (Levinas).</p>
+<p>Por outro lado, a virtualidade também pode ser <strong>espaço de apoio e pertencimento</strong>. A conclusão aponta para a necessidade de equilíbrio e de um uso mais consciente das tecnologias.</p>`
+  },
+  {
+    keys: ['equipe','quem fez','pesquisadoras','orientadora','integrantes','coorientador','wildicleia','cicero'],
+    answer: `<p>Equipe da <strong>Faculdade CESMAC do Agreste</strong>:</p>
+<p><strong>Orientadora:</strong> Profa. Wildicleia de Oliveira Santos Lopes<br>
+<strong>Coorientador:</strong> Prof. Cícero José Barbosa da Fonseca</p>
+<p><strong>Pesquisadoras:</strong><br>
+· Jessica Mariane da Silva Santos<br>
+· Maria Eduarda Malta Ramos<br>
+· Franciele Caetano Soares da Silva<br>
+· Priscilla Silva Barbosa<br>
+· Ramyle Vívian de Lima Santos<br>
+· Emmily Vitória Barros Dos Prazeres</p>
+<p>Desenvolvido entre <strong>maio de 2025 e abril de 2026</strong>, no PSIC, vinculado ao NAP da FEJAL.</p>`
+  },
+  {
+    keys: ['dificuldades','desafios','problemas','entraves','limitacoes','reformulacao'],
+    answer: `<p>A principal dificuldade foi a <strong>necessidade de reformular a metodologia</strong>. A proposta inicial previa entrevistas com adolescentes de escolas públicas e privadas, mas exigências éticas, logísticas e de tempo tornaram a etapa inviável.</p>
+<p>A pesquisa foi redirecionada para um formato <strong>exclusivamente bibliográfico</strong>, mantendo qualidade e profundidade.</p>
+<p>Outra dificuldade foi a <strong>gestão do tempo</strong>, já que as integrantes conciliam o projeto com graduação e estágios.</p>`
+  },
+  {
+    keys: ['pontos positivos','positivo','conquistas','aprendizado','amadurecimento','formacao'],
+    answer: `<p>Destaca-se o <strong>engajamento e a dedicação de toda a equipe</strong> ao longo do processo.</p>
+<p>A riqueza do material bibliográfico sobre psicanálise, adolescência e virtualidade permitiu aprofundar o tema. A <strong>orientação da professora Wildicleia</strong> foi essencial, especialmente no redirecionamento metodológico.</p>
+<p>A aproximação com Freud, Lacan e Bauman de forma contextualizada trouxe <strong>amadurecimento teórico</strong> para a formação das pesquisadoras.</p>`
+  },
+  {
+    keys: ['palavras-chave','palavras chave','keywords','termos'],
+    answer: `<p>As <strong>palavras-chave</strong> do projeto:</p>
+<p><strong>Adolescência · Redes Sociais · Virtualidade · Alteridade · Relações Sociais · Psicanálise · Identidade · Hiperconectividade</strong></p>`
+  },
+  {
+    keys: ['referencias','referencia','bibliografia','autores','livros','obras citadas','fontes'],
+    answer: `<p>Principais <strong>referências</strong>:</p>
+<p>· ALBERTO, Sônia. <em>O adolescente e o Outro.</em> Zahar, 2004.<br>
+· BAUMAN, Zygmunt. <em>Modernidade líquida.</em> Zahar, 2001.<br>
+· ERIKSON, Erik H. <em>Identidade: juventude e crise.</em> Zahar, 1976.<br>
+· FREUD, Sigmund. <em>O mal-estar na civilização.</em> Companhia das Letras, 2010.<br>
+· LACAN, Jacques. O estádio do espelho (1949). In: <em>Escritos.</em> Zahar, 1998.<br>
+· LEVINAS, Emmanuel. <em>Totalidade e infinito.</em> Edições 70, 2008.<br>
+· MENDES, E. D. Impasses na constituição do sujeito causado pelas tecnologias digitais. <em>Revista Subjetividades</em>, 2020.<br>
+· PILETTI, N. et al. <em>Psicologia do desenvolvimento.</em> Contexto, 2024.<br>
+· WALLON, Henrique. <em>A evolução psicológica da criança.</em> Martins Fontes, 2007.</p>`
+  },
+  {
+    keys: ['familia','pais','escola','educacao','professor','mediacao','orientacao','adultos'],
+    answer: `<p><strong>Família, escola e profissionais de saúde mental</strong> assumem papel fundamental na sustentação do adolescente.</p>
+<p>Quando o suporte simbólico familiar se enfraquece, o adolescente pode buscar nas redes um espaço de reconhecimento e pertencimento — ainda que precário.</p>
+<p>A presença de <strong>espaços de escuta</strong> é essencial, assim como estratégias educativas que favoreçam a reflexão crítica sobre o uso das tecnologias.</p>`
+  },
+  {
+    keys: ['beneficio','lado bom','tecnologia positiva','apoio','pertencimento','grupos','saude mental'],
+    answer: `<p>A pesquisa tem uma visão <strong>não reducionista da virtualidade</strong>: o digital não é apenas espaço de risco.</p>
+<p>As redes podem funcionar como <strong>dispositivos de apoio</strong> — grupos ligados à saúde mental, diversidade e causas sociais favorecem vínculos significativos e fortalecimento da identidade.</p>
+<p>O que se evidencia é a importância de um <strong>equilíbrio</strong> entre as dimensões virtual e presencial.</p>`
+  },
+  {
+    keys: ['ola','oi','bom dia','boa tarde','boa noite','hey','tudo bem','como vai','hello'],
+    answer: `<p>Olá! Sou a <strong>Psi·IA</strong>, assistente digital do projeto <em>Nos Labirintos do Espelho Digital</em>.</p>
+<p>Você pode me perguntar sobre:</p>
+<p>→ Objetivos e metodologia<br>
+→ Alteridade, identidade e hiperconectividade<br>
+→ Lacan, Freud, Bauman, Levinas, Wallon, Erikson<br>
+→ Resultados e conclusões<br>
+→ A equipe de pesquisadoras</p>`
+  },
+  {
+    keys: ['obrigado','obrigada','valeu','thanks','grato','grata'],
+    answer: `<p>De nada! Se tiver mais dúvidas sobre <em>adolescência, alteridade, psicanálise ou hiperconectividade</em>, é só perguntar.</p>`
+  }
+];
+
+const DEFAULT_REPLIES = [
+  `<p>Não encontrei uma resposta específica para isso no conteúdo do projeto. Tente reformular a pergunta.</p><p>Posso responder sobre: <strong>alteridade, Lacan, Freud, Bauman, Levinas, Wallon, Erikson, adolescência, redes sociais, metodologia, equipe, resultados e conclusão.</strong></p>`,
+  `<p>Essa pergunta está um pouco fora do escopo do projeto. Experimente perguntar sobre os <strong>conceitos teóricos</strong>, os <strong>autores</strong> ou os <strong>resultados</strong>.</p>`,
+  `<p>Não tenho dados suficientes sobre esse tópico. Mas posso falar sobre a <strong>influência das redes sociais na adolescência</strong> ou sobre qualquer autor citado.</p>`
+];
+
+let _defIdx = 0;
+
+const normalize = (s) => s.toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9\s]/g, ' ')
+  .replace(/\s+/g, ' ').trim();
+
+function findAnswer(input) {
+  const q = normalize(input);
+  let best = null, bestScore = 0;
+
+  for (const entry of KB) {
+    let score = 0;
+    for (const kw of entry.keys) {
+      const k = normalize(kw);
+      if (k && q.includes(k)) score += k.split(' ').length;
+    }
+    if (score > bestScore) { bestScore = score; best = entry; }
+  }
+  if (best) return best.answer;
+  return DEFAULT_REPLIES[_defIdx++ % DEFAULT_REPLIES.length];
+}
+
+// ── UI DO CHAT ───────────────────────────────────────────────
+function chatAddMsg(content, isUser = false) {
+  const chat = $('ia-chat');
+  if (!chat) return;
+  const wrap = document.createElement('div');
+  if (isUser) {
+    wrap.className = 'ia-user-bubble';
+    wrap.textContent = content;               // texto do usuário nunca vira HTML
+  } else {
+    wrap.className = 'ia-message ia-msg';
+    wrap.innerHTML = `<div class="ia-msg-avatar">◈</div><div class="ia-msg-bubble">${content}</div>`;
+  }
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function chatTyping(show) {
+  const existing = $('chat-typing');
+  const chat = $('ia-chat');
+  if (!chat) return;
+  if (show && !existing) {
+    const div = document.createElement('div');
+    div.id = 'chat-typing';
+    div.className = 'ia-message ia-msg';
+    div.innerHTML = `<div class="ia-msg-avatar">◈</div><div class="ia-msg-bubble"><div class="ia-typing"><span></span><span></span><span></span></div></div>`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  } else if (!show && existing) {
+    existing.remove();
+  }
+}
+
+let chatBusy = false;
+
+function chatRespond(userMsg) {
+  if (chatBusy) return;
+  chatBusy = true;
+  const send = $('ia-send');
+  const input = $('ia-input');
+  if (send) send.disabled = true;
+  if (input) input.disabled = true;
+
+  chatTyping(true);
+  setTimeout(() => {
+    chatTyping(false);
+    chatAddMsg(findAnswer(userMsg), false);
+    chatBusy = false;
+    if (send) send.disabled = false;
+    if (input) { input.disabled = false; input.focus(); }
+  }, 600 + Math.random() * 700);
+}
+
+function sendMessage() {
+  const input = $('ia-input');
+  if (!input) return;
+  const msg = input.value.trim();
+  if (!msg || chatBusy) return;
+  input.value = '';
+  chatAddMsg(msg, true);
+  chatRespond(msg);
+}
+
+function sendSuggestion(btn) {
+  const msg = btn.textContent.trim();
+  if (chatBusy) return;
+  chatAddMsg(msg, true);
+  chatRespond(msg);
+}
+
+// ── EVENT LISTENERS DO CHAT ──────────────────────────────────
+function initChat() {
+  const sendBtn = $('ia-send');
+  const inputEl = $('ia-input');
+  if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+  if (inputEl) inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+  });
+  qsa('.ia-sug').forEach(btn => btn.addEventListener('click', () => sendSuggestion(btn)));
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initChat);
+} else {
+  initChat();
+}
+
+// ── GLITCH OCASIONAL ─────────────────────────────────────────
+(function initGlitch() {
+  if (reduceMotion) return;
+  setInterval(() => {
+    const hero = qs('.hero-title');
+    if (!hero) return;
+    if (Math.random() > 0.92) {
+      hero.classList.add('glitch-text');
+      setTimeout(() => hero.classList.remove('glitch-text'), 600);
+    }
+  }, 4000);
+})();
+
+// Expostos para os onclick do HTML
+window.sendMessage = sendMessage;
+window.sendSuggestion = sendSuggestion;
+
+// ── TRAVA DE SEGURANÇA ───────────────────────────────────────
+// Se por qualquer motivo o loader/espelho não concluir em 9s,
+// o site é revelado assim mesmo. A página nunca fica presa.
+setTimeout(() => {
+  if (!state.siteReady) {
+    const loader = $('loader');
+    if (loader) loader.classList.add('done');
+    shatterMirror();
+  }
+}, 9000);
+
+// Cards de teoria viram com toque (celular não tem hover)
+document.addEventListener('click', (e) => {
+  const card = e.target.closest('.teoria-card');
+  if (card && isTouch) card.classList.toggle('flipped');
+});
+
+// Erros de runtime não podem deixar a tela preta
+window.addEventListener('error', () => {
+  const loader = $('loader');
+  if (loader) loader.classList.add('done');
+  if (!state.siteReady) shatterMirror();
+});
+
+</script>
+</body>
+</html>
